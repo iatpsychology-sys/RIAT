@@ -243,7 +243,7 @@
       if(stim.type === 'text'){
         $('#stimulus').textContent = stim.value;
       } else if(stim.type === 'image'){
-        $('#stimulus').innerHTML = `<img src="${stim.value}" alt="stimulus image">`;
+        $('#stimulus').innerHTML = `<img src="${stim.value}">`;
       }
       updateProgress();
     }
@@ -368,5 +368,6 @@
   </script>
 </body>
 </html>
+
 
 
