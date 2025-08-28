@@ -5,97 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Race IAT</title>
   <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121935;
+      --text: #e7eaf6;
+      --accent: #7aa2ff;
+      --error: #ff4c4c;
+    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: sans-serif;
-      background: #0b1020;
-      color: #e7eaf6;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--text);
       display: grid;
       place-items: center;
-      height: 100vh;
+      min-height: 100vh;
     }
-    .container {
-      max-width: 900px;
-      padding: 24px;
-    }
+    .container { max-width: 900px; padding: 24px; }
+    h1 { margin: 0 0 8px; }
+    .subtle { opacity: .8; font-size: 14px; }
+
     .stimulus {
       font-size: 36px;
-      font-weight: bold;
+      font-weight: 800;
       text-align: center;
-      margin: 20px 0;
+      margin: 24px 0 12px;
+      min-height: 140px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
     }
-    .stimulus img {
-      max-height: 120px;
-    }
-    .labels {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
+    .stimulus img { max-height: 120px; border-radius: 8px; }
+
+    .labels { display: flex; gap: 12px; margin-bottom: 8px; }
     .label {
-      flex: 1;
-      padding: 10px;
-      background: #121935;
-      border-radius: 8px;
-      margin: 0 6px;
-      text-align: center;
-    }
-    .controls {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .primary {
-      background: #7aa2ff;
-      color: #0b1020;
-    }
-    .ghost {
-      background: #121935;
-      color: #e7eaf6;
-    }
-    .progress {
-      height: 10px;
-      background: #121935;
-      border-radius: 999px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-    .bar {
-      height: 100%;
-      background: #7aa2ff;
-      width: 0%;
-    }
-    .results {
-      margin-top: 20px;
-      font-size: 14px;
-    }
-    .stimulus.wrong {
-      animation: flashWrong 0.3s ease-in-out;
+      flex: 1; padding: 10px; background: var(--panel); border-radius: 8px; text-align: center;
     }
 
-    @keyframes flashWrong {
-      0% { background-color: #ff4c4c; color: #0b1020; }
-      100% { background-color: transparent; color: #e7eaf6; }
-    }
+    .controls { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+    button { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; }
+    .primary { background: var(--accent); color: var(--bg); }
+    .ghost { background: var(--panel); color: var(--text); }
+
+    .progress { height: 10px; background: var(--panel); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+    .bar { height: 100%; background: var(--accent); width: 0%; transition: width .2s ease; }
+
+    .results { margin-top: 20px; font-size: 14px; }
+    .stimulus.wrong { animation: flashWrong 0.25s ease-in-out; }
+    @keyframes flashWrong { 0% { background-color: var(--error); color: var(--bg); } 100% { background-color: transparent; color: var(--text); } }
+
+    .kbd { display: inline-block; padding: 2px 6px; border-radius: 6px; background: #0f1633; border: 1px solid #1b254d; font-weight: 800; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Race Implicit Association Test</h1>
+    <div class="subtle">Use <span class="kbd">E</span> for the LEFT label, <span class="kbd">I</span> for the RIGHT label. Press <span class="kbd">Space</span> to start or resume.</div>
+
     <div class="labels">
       <div class="label" id="leftLabel">—</div>
       <div class="label" id="rightLabel">—</div>
     </div>
+
     <div class="stimulus" id="stimulus">Press Space to begin</div>
-    <div class="progress"><div class="bar" id="bar"></div></div>
+
+    <div class="progress" title="Overall progress">
+      <div class="bar" id="bar"></div>
+    </div>
+    <div class="subtle" id="blockProgress">—</div>
+
     <div class="controls">
       <button class="primary" id="startBtn">Start / Resume</button>
       <button class="ghost" id="pauseBtn">Pause</button>
@@ -103,10 +82,14 @@
       <button class="ghost" id="downloadRaw">Download Raw (.csv)</button>
       <button class="ghost" id="downloadSummary">Download Summary (.csv)</button>
     </div>
+
     <div class="results" id="results">No results yet.</div>
   </div>
 
   <script>
+    // ---------------------------
+    // Config
+    // ---------------------------
     const CONFIG = {
       categories: {
         leftFirst: {
@@ -162,20 +145,59 @@
       },
       blocks: [
         { type: 'attribute', trials: 16, left: 'attributes.leftFirst', right: 'attributes.rightFirst' },
-        { type: 'category', trials: 16, left: 'categories.leftFirst', right: 'categories.rightFirst' },
-        { type: 'combinedA', trials: 32, left: ['categories.leftFirst','attributes.leftFirst'], right: ['categories.rightFirst','attributes.rightFirst'] },
-        { type: 'category', trials: 16, left: 'categories.rightFirst', right: 'categories.leftFirst' },
+        { type: 'category',  trials: 16, left: 'categories.leftFirst',  right: 'categories.rightFirst' },
+        { type: 'combinedA', trials: 32, left: ['categories.leftFirst','attributes.leftFirst'],  right: ['categories.rightFirst','attributes.rightFirst'] },
+        { type: 'category',  trials: 16, left: 'categories.rightFirst', right: 'categories.leftFirst' },
         { type: 'combinedB', trials: 32, left: ['categories.rightFirst','attributes.leftFirst'], right: ['categories.leftFirst','attributes.rightFirst'] }
       ],
       errorPenalty: 600
     };
 
+    // ---------------------------
+    // Helpers
+    // ---------------------------
     const $ = sel => document.querySelector(sel);
-    const sample = arr => arr[Math.floor(Math.random()*arr.length)];
-    const shuffle = arr => arr.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(p=>p[1]);
+    const sample = arr => arr[Math.floor(Math.random() * arr.length)];
+    const shuffle = arr => arr.map(x => [Math.random(), x]).sort((a,b)=>a[0]-b[0]).map(p=>p[1]);
     const now = () => performance.now();
-    const getByPath = (obj, path) => path.split('.').reduce((o,k)=>o[k], obj);
+    const getByPath = (obj, path) => path.split('.').reduce((o, k) => o[k], obj);
 
+    const nameOf = ref => Array.isArray(ref)
+      ? ref.map(r => getByPath(CONFIG, r).name).join(' or ')
+      : getByPath(CONFIG, ref).name;
+
+    function labelsFor(block){
+      return { left: nameOf(block.left), right: nameOf(block.right) };
+    }
+
+    function buildStimulusSet(block) {
+      const getItems = ref => Array.isArray(ref)
+        ? ref.flatMap(r => getByPath(CONFIG, r).items)
+        : getByPath(CONFIG, ref).items;
+
+      if (Array.isArray(block.left) && Array.isArray(block.right)) {
+        const leftItems = block.left.flatMap(ref => getItems(ref).map(item => ({ ...item, side: 'left' })));
+        const rightItems = block.right.flatMap(ref => getItems(ref).map(item => ({ ...item, side: 'right' })));
+        return [...leftItems, ...rightItems];
+      } else {
+        const leftItems = getItems(block.left).map(item => ({ ...item, side: 'left' }));
+        const rightItems = getItems(block.right).map(item => ({ ...item, side: 'right' }));
+        return [...leftItems, ...rightItems];
+      }
+    }
+
+    function makeTrialSequence(block){
+      // Create a randomized sequence exactly equal to block.trials length, repeating if needed
+      const base = buildStimulusSet(block);
+      if (!base.length) return [];
+      let seq = [];
+      while (seq.length < block.trials) seq = seq.concat(shuffle(base));
+      return seq.slice(0, block.trials);
+    }
+
+    // ---------------------------
+    // State
+    // ---------------------------
     let state = {
       blockIndex: -1,
       trialIndex: 0,
@@ -184,89 +206,56 @@
       keymap: { left: 'E', right: 'I' },
       startTime: null,
       data: [],
-      summary: {}
+      summary: {},
+      pool: []
     };
 
-    let pool = [];
-
-    function labelsFor(block){
-      const nameOf = ref => Array.isArray(ref) ? ref.map(r=>getByPath(CONFIG,r).name).join(' or ') : getByPath(CONFIG,ref).name;
-      return {left: nameOf(block.left), right: nameOf(block.right)};
-    }
-
-    function buildStimulusPool(block) {
-      const getItems = ref =>
-        Array.isArray(ref)
-          ? ref.flatMap(r => getByPath(CONFIG, r).items)
-          : getByPath(CONFIG, ref).items;
-      let stimuli = [];
-
-      if (Array.isArray(block.left) && Array.isArray(block.right)) {
-        // Combined block: merge left and right arrays
-        const leftItems = block.left.flatMap(ref =>
-          getItems(ref).map(item => ({ ...item, side: 'left' }))
-        );
-        const rightItems = block.right.flatMap(ref =>
-          getItems(ref).map(item => ({ ...item, side: 'right' }))
-        );
-        stimuli = [...leftItems, ...rightItems];
-      } else {
-    // Single block: one category or attribute per side
-      const leftItems = getItems(block.left).map(item => ({ ...item, side: 'left' }));
-      const rightItems = getItems(block.right).map(item => ({ ...item, side: 'right' }));
-
-      const allStimuli = [...leftItems, ...rightItems];
-
-  // Shuffle the combined list so each stimulus appears once in a random order
-      return shuffle(allStimuli);
-    }
-
+    // ---------------------------
+    // Flow
+    // ---------------------------
     function start(){
-      if(state.blockIndex===-1){ nextBlock(); }
+      if (state.blockIndex === -1) nextBlock();
       state.running = true;
-      nextTrial();
+      if (!state.currentStimulus) nextTrial();
     }
 
-    function pause(){ state.running=false; }
+    function pause(){ state.running = false; }
+
     function reset(){
-      state = {...state, blockIndex:-1, trialIndex:0, running:false, data:[], summary:{} };
+      state = { ...state, blockIndex: -1, trialIndex: 0, running: false, data: [], summary: {}, currentStimulus: null, startTime: null, pool: [] };
       $('#stimulus').textContent = 'Press Space to begin';
       $('#leftLabel').textContent = '—';
       $('#rightLabel').textContent = '—';
       $('#bar').style.width = '0%';
+      $('#blockProgress').textContent = '—';
       $('#results').textContent = 'No results yet.';
     }
 
     function nextBlock(){
       state.blockIndex++;
       state.trialIndex = 0;
-      if(state.blockIndex >= CONFIG.blocks.length){ finish(); return; }
+      state.currentStimulus = null;
+
+      if (state.blockIndex >= CONFIG.blocks.length) { finish(); return; }
+
       const block = CONFIG.blocks[state.blockIndex];
-      pool = buildStimulusPool(block);
-      const {left, right} = labelsFor(block);
+      state.pool = makeTrialSequence(block);
+
+      const { left, right } = labelsFor(block);
       $('#leftLabel').textContent = left;
       $('#rightLabel').textContent = right;
-      $('#stimulus').textContent = `Block ${state.blockIndex + 1} of ${CONFIG.blocks.length}`;
+      $('#stimulus').textContent = `Block ${state.blockIndex + 1} of ${CONFIG.blocks.length}. Press Space to continue.`;
       updateProgress();
+      updateBlockProgress();
     }
 
-    function nextTrial() {
+    function nextTrial(){
       if (!state.running) return;
       const block = CONFIG.blocks[state.blockIndex];
 
-  // Safety check: if pool is missing or too short, rebuild it
-      if (!pool || pool.length < block.trials) {
-        pool = buildStimulusPool(block);
-      }
+      if (state.trialIndex >= state.pool.length) { nextBlock(); return; }
 
-      if (state.trialIndex >= pool.length) {
-        nextBlock();
-        return;
-      }
-
-      const stim = pool[state.trialIndex];
-
-  // Defensive check to avoid undefined errors
+      const stim = state.pool[state.trialIndex];
       if (!stim || !stim.type) {
         console.error('Invalid stimulus at trial', state.trialIndex, stim);
         $('#stimulus').textContent = 'Error: Invalid stimulus.';
@@ -279,53 +268,54 @@
       if (stim.type === 'text') {
         $('#stimulus').textContent = stim.value;
       } else if (stim.type === 'image') {
-        $('#stimulus').innerHTML = `<img src="${stim.value}">`;
+        $('#stimulus').innerHTML = `<img src="${stim.value}" alt="stimulus">`;
       }
 
       updateProgress();
-    }
-
-      const stim = pool[state.trialIndex];
-      state.currentStimulus = stim;
-      state.startTime = now();
-      if(stim.type === 'text'){
-        $('#stimulus').textContent = stim.value;
-      } else if(stim.type === 'image'){
-        $('#stimulus').innerHTML = `<img src="${stim.value}">`;
-      }
-      updateProgress();
+      updateBlockProgress();
     }
 
     function updateProgress(){
       const totalDone = state.data.length;
-      const totalTrials = CONFIG.blocks.reduce((a,b)=>a+b.trials,0);
-      const pct = totalTrials ? Math.min(100, (totalDone/totalTrials)*100) : 0;
-      $('#bar').style.width = pct.toFixed(1)+'%';
+      const totalTrials = CONFIG.blocks.reduce((a, b) => a + b.trials, 0);
+      const pct = totalTrials ? Math.min(100, (totalDone / totalTrials) * 100) : 0;
+      $('#bar').style.width = pct.toFixed(1) + '%';
+    }
+
+    function updateBlockProgress(){
+      const b = CONFIG.blocks[state.blockIndex];
+      if (!b) { $('#blockProgress').textContent = '—'; return; }
+      $('#blockProgress').textContent = `Block ${state.blockIndex + 1}/${CONFIG.blocks.length} • Trial ${Math.min(state.trialIndex + 1, b.trials)} of ${b.trials} (${b.type})`;
     }
 
     function handleKey(e){
       const k = e.key.toUpperCase();
-      if(k===' '){ if(!state.running) start(); e.preventDefault(); return; }
-      if(!state.running || !state.currentStimulus) return;
-      if(k!==state.keymap.left && k!==state.keymap.right) return;
+      if (k === ' ') { if (!state.running) start(); e.preventDefault(); return; }
+      if (!state.running || !state.currentStimulus) return;
+      if (k !== state.keymap.left && k !== state.keymap.right) return;
 
-      const sidePressed = (k===state.keymap.left)? 'left':'right';
+      const sidePressed = (k === state.keymap.left) ? 'left' : 'right';
       const correct = sidePressed === state.currentStimulus.side;
       const rt = now() - state.startTime;
+      const block = CONFIG.blocks[state.blockIndex];
 
       state.data.push({
-        block: state.blockIndex+1,
-        trial: state.trialIndex+1,
+        blockIndex: state.blockIndex + 1,
+        blockType: block.type,
+        trial: state.trialIndex + 1,
         stimulus: state.currentStimulus.value,
+        stimType: state.currentStimulus.type,
         correctSide: state.currentStimulus.side,
         response: sidePressed,
         correct,
         rt
       });
-      if(!correct){
+
+      if (!correct) {
         $('#stimulus').classList.add('wrong');
-        setTimeout(() => $('#stimulus').classList.remove('wrong'), 300);
+        setTimeout(() => $('#stimulus').classList.remove('wrong'), 250);
       }
+
       state.trialIndex++;
       nextTrial();
     }
@@ -336,28 +326,33 @@
       computeScores();
     }
 
+    // ---------------------------
+    // Scoring (D-score, Greenwald et al.)
+    // ---------------------------
     function computeScores(){
       const penalty = CONFIG.errorPenalty;
-      const trials = state.data.map(r => ({
-        ...r,
-        rtAdj: r.correct ? r.rt : r.rt + penalty
-      }));
+      const trials = state.data.map(r => ({ ...r, rtAdj: r.correct ? r.rt : r.rt + penalty }));
 
-      const A = trials.filter(r => r.block === 3).map(r => r.rtAdj);
-      const B = trials.filter(r => r.block === 5).map(r => r.rtAdj);
+      // Use block types instead of hard-coded indices
+      const A = trials.filter(r => r.blockType === 'combinedA').map(r => r.rtAdj);
+      const B = trials.filter(r => r.blockType === 'combinedB').map(r => r.rtAdj);
 
-      const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+      const mean = arr => arr.reduce((a,b)=>a+b,0) / arr.length;
       const sd = arr => {
+        if (arr.length < 2) return NaN;
         const m = mean(arr);
-        return Math.sqrt(arr.reduce((a,b)=>a+Math.pow(b-m,2),0)/(arr.length-1));
+        return Math.sqrt(arr.reduce((a,b)=>a + Math.pow(b - m, 2), 0) / (arr.length - 1));
       };
 
       let D = null, direction = '';
-      if(A.length > 2 && B.length > 2){
+      if (A.length > 2 && B.length > 2) {
         const pooledSD = sd(A.concat(B));
-        D = (mean(B) - mean(A)) / pooledSD;
-        direction = D > 0 ? 'Faster when Black+Bad / White+Good were paired (stereotypical).' :
-                            'Faster when Black+Good / White+Bad were paired (counter-stereotypical).';
+        if (pooledSD && isFinite(pooledSD) && pooledSD > 0) {
+          D = (mean(B) - mean(A)) / pooledSD;
+          direction = D > 0
+            ? 'Faster when Black+Bad / White+Good were paired (stereotypical).'
+            : 'Faster when Black+Good / White+Bad were paired (counter-stereotypical).';
+        }
       }
 
       state.summary = {
@@ -367,7 +362,7 @@
         direction
       };
 
-      if(D == null){
+      if (D == null) {
         $('#results').textContent = 'Not enough valid data to compute a score.';
       } else {
         const interp = interpretD(D);
@@ -382,21 +377,24 @@
 
     function interpretD(D){
       const abs = Math.abs(D);
-      if(abs < .15) return { text: 'No association' };
-      if(abs < .35) return { text: 'Slight association' };
-      if(abs < .65) return { text: 'Moderate association' };
+      if (abs < .15) return { text: 'No association' };
+      if (abs < .35) return { text: 'Slight association' };
+      if (abs < .65) return { text: 'Moderate association' };
       return { text: 'Strong association' };
     }
 
+    // ---------------------------
+    // Export
+    // ---------------------------
     function exportRawCSV(){
-      const headers = ['block','trial','stimulus','correctSide','response','correct','rt'];
+      const headers = ['blockIndex','blockType','trial','stimulus','stimType','correctSide','response','correct','rt'];
       const rows = state.data.map(r => headers.map(h => r[h] ?? ''));
       const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
       download('race-iat-raw.csv', csv);
     }
 
     function exportSummaryCSV(){
-      const h = ['D','n_congruent','n_incongruent','errorPenaltyMs'];
+      const h = ['D','n_congruent(combinedA)','n_incongruent(combinedB)','errorPenaltyMs'];
       const r = [state.summary.D, state.summary.nA, state.summary.nB, CONFIG.errorPenalty];
       const csv = [h.join(','), r.join(',')].join('\n');
       download('race-iat-summary.csv', csv);
@@ -410,8 +408,11 @@
       URL.revokeObjectURL(a.href);
     }
 
+    // ---------------------------
+    // Events
+    // ---------------------------
     window.addEventListener('keydown', handleKey);
-    $('#startBtn').addEventListener('click', () => { if(!state.running) start(); });
+    $('#startBtn').addEventListener('click', () => { if (!state.running) start(); });
     $('#pauseBtn').addEventListener('click', pause);
     $('#resetBtn').addEventListener('click', reset);
     $('#downloadRaw').addEventListener('click', exportRawCSV);
@@ -419,15 +420,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
