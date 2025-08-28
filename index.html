@@ -77,6 +77,14 @@
       margin-top: 20px;
       font-size: 14px;
     }
+    .stimulus.wrong {
+      animation: flashWrong 0.3s ease-in-out;
+    }
+
+    @keyframes flashWrong {
+      0% { background-color: #ff4c4c; color: #0b1020; }
+      100% { background-color: transparent; color: #e7eaf6; }
+    }
   </style>
 </head>
 <body>
@@ -274,7 +282,10 @@
         correct,
         rt
       });
-
+      if(!correct){
+        $('#stimulus').classList.add('wrong');
+        setTimeout(() => $('#stimulus').classList.remove('wrong'), 300);
+      }
       state.trialIndex++;
       nextTrial();
     }
@@ -368,6 +379,7 @@
   </script>
 </body>
 </html>
+
 
 
 
