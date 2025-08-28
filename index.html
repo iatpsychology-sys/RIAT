@@ -187,7 +187,6 @@
     }
 
     function makeTrialSequence(block){
-      // Create a randomized sequence exactly equal to block.trials length, repeating if needed
       const base = buildStimulusSet(block);
       if (!base.length) return [];
       let seq = [];
@@ -216,7 +215,7 @@
     function start(){
       if (state.blockIndex === -1) nextBlock();
       state.running = true;
-      if (!state.currentStimulus) nextTrial();
+      nextTrial();
     }
 
     function pause(){ state.running = false; }
@@ -235,6 +234,7 @@
       state.blockIndex++;
       state.trialIndex = 0;
       state.currentStimulus = null;
+      state.running = false; // pause between blocks
 
       if (state.blockIndex >= CONFIG.blocks.length) { finish(); return; }
 
@@ -333,7 +333,6 @@
       const penalty = CONFIG.errorPenalty;
       const trials = state.data.map(r => ({ ...r, rtAdj: r.correct ? r.rt : r.rt + penalty }));
 
-      // Use block types instead of hard-coded indices
       const A = trials.filter(r => r.blockType === 'combinedA').map(r => r.rtAdj);
       const B = trials.filter(r => r.blockType === 'combinedB').map(r => r.rtAdj);
 
@@ -367,56 +366,4 @@
       } else {
         const interp = interpretD(D);
         $('#results').innerHTML = `
-          <div><strong>D-score:</strong> <span style="font-size:20px">${state.summary.D}</span></div>
-          <div>${direction}</div>
-          <div>Interpretation: <em>${interp.text}</em></div>
-          <div style="margin-top:8px">(Positive D = stereotypical bias. Negative D = counter-stereotypical bias.)</div>
-        `;
-      }
-    }
-
-    function interpretD(D){
-      const abs = Math.abs(D);
-      if (abs < .15) return { text: 'No association' };
-      if (abs < .35) return { text: 'Slight association' };
-      if (abs < .65) return { text: 'Moderate association' };
-      return { text: 'Strong association' };
-    }
-
-    // ---------------------------
-    // Export
-    // ---------------------------
-    function exportRawCSV(){
-      const headers = ['blockIndex','blockType','trial','stimulus','stimType','correctSide','response','correct','rt'];
-      const rows = state.data.map(r => headers.map(h => r[h] ?? ''));
-      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-      download('race-iat-raw.csv', csv);
-    }
-
-    function exportSummaryCSV(){
-      const h = ['D','n_congruent(combinedA)','n_incongruent(combinedB)','errorPenaltyMs'];
-      const r = [state.summary.D, state.summary.nA, state.summary.nB, CONFIG.errorPenalty];
-      const csv = [h.join(','), r.join(',')].join('\n');
-      download('race-iat-summary.csv', csv);
-    }
-
-    function download(filename, content){
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([content], {type:'text/csv'}));
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    // ---------------------------
-    // Events
-    // ---------------------------
-    window.addEventListener('keydown', handleKey);
-    $('#startBtn').addEventListener('click', () => { if (!state.running) start(); });
-    $('#pauseBtn').addEventListener('click', pause);
-    $('#resetBtn').addEventListener('click', reset);
-    $('#downloadRaw').addEventListener('click', exportRawCSV);
-    $('#downloadSummary').addEventListener('click', exportSummaryCSV);
-  </script>
-</body>
-</html>
+          <div><strong>D-score:</strong>
