@@ -199,7 +199,19 @@
         Array.isArray(ref)
           ? ref.flatMap(r => getByPath(CONFIG, r).items)
           : getByPath(CONFIG, ref).items;
+      let stimuli = [];
 
+      if (Array.isArray(block.left) && Array.isArray(block.right)) {
+        // Combined block: merge left and right arrays
+        const leftItems = block.left.flatMap(ref =>
+          getItems(ref).map(item => ({ ...item, side: 'left' }))
+        );
+        const rightItems = block.right.flatMap(ref =>
+          getItems(ref).map(item => ({ ...item, side: 'right' }))
+        );
+        stimuli = [...leftItems, ...rightItems];
+      } else {
+    // Single block: one category or attribute per side
       const leftItems = getItems(block.left).map(item => ({ ...item, side: 'left' }));
       const rightItems = getItems(block.right).map(item => ({ ...item, side: 'right' }));
 
@@ -225,7 +237,7 @@
       $('#results').textContent = 'No results yet.';
     }
 
-        function nextBlock(){
+    function nextBlock(){
       state.blockIndex++;
       state.trialIndex = 0;
       if(state.blockIndex >= CONFIG.blocks.length){ finish(); return; }
@@ -379,6 +391,7 @@
   </script>
 </body>
 </html>
+
 
 
 
