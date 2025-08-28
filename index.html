@@ -194,19 +194,19 @@
       return {left: nameOf(block.left), right: nameOf(block.right)};
     }
 
-    function buildStimulusPool(block){
-      const makePool = (left,right) => {
-        const L = Array.isArray(left) ? left.flatMap(p=>getByPath(CONFIG,p).items) : getByPath(CONFIG,left).items;
-        const R = Array.isArray(right)? right.flatMap(p=>getByPath(CONFIG,p).items) : getByPath(CONFIG,right).items;
-        const pairs = [];
-        for(let i=0;i<block.trials;i++){
-          const side = Math.random()<0.5?'left':'right';
-          const item = side==='left'? sample(L) : sample(R);
-          pairs.push({...item, side});
-        }
-        return shuffle(pairs);
-      };
-      return makePool(block.left, block.right);
+    function buildStimulusPool(block) {
+      const getItems = ref =>
+        Array.isArray(ref)
+          ? ref.flatMap(r => getByPath(CONFIG, r).items)
+          : getByPath(CONFIG, ref).items;
+
+      const leftItems = getItems(block.left).map(item => ({ ...item, side: 'left' }));
+      const rightItems = getItems(block.right).map(item => ({ ...item, side: 'right' }));
+
+      const allStimuli = [...leftItems, ...rightItems];
+
+  // Shuffle the combined list so each stimulus appears once in a random order
+      return shuffle(allStimuli);
     }
 
     function start(){
@@ -379,6 +379,7 @@
   </script>
 </body>
 </html>
+
 
 
 
