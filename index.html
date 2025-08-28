@@ -250,13 +250,41 @@
       updateProgress();
     }
 
-    function nextTrial(){
-      if(!state.running) return;
+    function nextTrial() {
+      if (!state.running) return;
       const block = CONFIG.blocks[state.blockIndex];
-      if(state.trialIndex >= block.trials){
+
+  // Safety check: if pool is missing or too short, rebuild it
+      if (!pool || pool.length < block.trials) {
+        pool = buildStimulusPool(block);
+      }
+
+      if (state.trialIndex >= pool.length) {
         nextBlock();
         return;
       }
+
+      const stim = pool[state.trialIndex];
+
+  // Defensive check to avoid undefined errors
+      if (!stim || !stim.type) {
+        console.error('Invalid stimulus at trial', state.trialIndex, stim);
+        $('#stimulus').textContent = 'Error: Invalid stimulus.';
+        return;
+      }
+
+      state.currentStimulus = stim;
+      state.startTime = now();
+
+      if (stim.type === 'text') {
+        $('#stimulus').textContent = stim.value;
+      } else if (stim.type === 'image') {
+        $('#stimulus').innerHTML = `<img src="${stim.value}">`;
+      }
+
+      updateProgress();
+    }
+
       const stim = pool[state.trialIndex];
       state.currentStimulus = stim;
       state.startTime = now();
@@ -391,6 +419,7 @@
   </script>
 </body>
 </html>
+
 
 
 
