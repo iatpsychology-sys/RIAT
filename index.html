@@ -14,73 +14,19 @@
       place-items: center;
       height: 100vh;
     }
-    .container {
-      max-width: 900px;
-      padding: 24px;
-    }
-    .stimulus {
-      font-size: 36px;
-      font-weight: bold;
-      text-align: center;
-      margin: 20px 0;
-    }
-    .stimulus img {
-      max-height: 120px;
-    }
-    .labels {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-    .label {
-      flex: 1;
-      padding: 10px;
-      background: #121935;
-      border-radius: 8px;
-      margin: 0 6px;
-      text-align: center;
-    }
-    .controls {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .primary {
-      background: #7aa2ff;
-      color: #0b1020;
-    }
-    .ghost {
-      background: #121935;
-      color: #e7eaf6;
-    }
-    .progress {
-      height: 10px;
-      background: #121935;
-      border-radius: 999px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-    .bar {
-      height: 100%;
-      background: #7aa2ff;
-      width: 0%;
-    }
-    .results {
-      margin-top: 20px;
-      font-size: 14px;
-    }
-    .stimulus.wrong {
-      animation: flashWrong 0.3s ease-in-out;
-    }
-
+    .container { max-width: 900px; padding: 24px; }
+    .stimulus { font-size: 36px; font-weight: bold; text-align: center; margin: 20px 0; }
+    .stimulus img { max-height: 120px; }
+    .labels { display: flex; justify-content: space-between; margin-bottom: 12px; }
+    .label { flex: 1; padding: 10px; background: #121935; border-radius: 8px; margin: 0 6px; text-align: center; }
+    .controls { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+    button { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .primary { background: #7aa2ff; color: #0b1020; }
+    .ghost { background: #121935; color: #e7eaf6; }
+    .progress { height: 10px; background: #121935; border-radius: 999px; overflow: hidden; margin-top: 10px; }
+    .bar { height: 100%; background: #7aa2ff; width: 0%; }
+    .results { margin-top: 20px; font-size: 14px; }
+    .stimulus.wrong { animation: flashWrong 0.3s ease-in-out; }
     @keyframes flashWrong {
       0% { background-color: #ff4c4c; color: #0b1020; }
       100% { background-color: transparent; color: #e7eaf6; }
@@ -100,65 +46,76 @@
       <button class="primary" id="startBtn">Start / Resume</button>
       <button class="ghost" id="pauseBtn">Pause</button>
       <button class="ghost" id="resetBtn">Reset</button>
-      <button class="ghost" id="downloadRaw">Download Raw (.csv)</button>
-      <button class="ghost" id="downloadSummary">Download Summary (.csv)</button>
     </div>
     <div class="results" id="results">No results yet.</div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script type="module">
+    // 🔹 Import Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
+
+    // 🔹 Your Firebase Config Here (replace with your actual config)
+    const firebaseConfig = {
+      apiKey: "AIzaSyC1Ysg_VamE6mxqa3OYRXEE2VleQSbVr2M",
+      authDomain: "iatbackend-bcacf.firebaseapp.com",
+      projectId: "iatbackend-bcacf",
+      storageBucket: "iatbackend-bcacf.firebasestorage.app",
+      messagingSenderId: "514084652967",
+      appId: "1:514084652967:web:fdde5df959b64a4163d882"
+    };
+
+    // 🔹 Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+    window.firebaseStorage = storage;
+    window.firebaseRef = ref;
+    window.firebaseUploadBytes = uploadBytes;
+  </script>
+
   <script>
+    // --- CONFIG & HELPER FUNCTIONS ---
     const CONFIG = {
       categories: {
-        leftFirst: {
-          name: 'Black Faces',
-          items: [
-            { type: 'image', value: 'black1.JPG' },
-            { type: 'image', value: 'black2.JPG' },
-            { type: 'image', value: 'black3.JPG' },
-            { type: 'image', value: 'black4.JPG' },
-            { type: 'image', value: 'black5.JPG' },
-            { type: 'image', value: 'black6.JPG' }
-          ]
-        },
-        rightFirst: {
-          name: 'White Faces',
-          items: [
-            { type: 'image', value: 'white1.JPG' },
-            { type: 'image', value: 'white2.JPG' },
-            { type: 'image', value: 'white3.JPG' },
-            { type: 'image', value: 'white4.JPG' },
-            { type: 'image', value: 'white5.JPG' },
-            { type: 'image', value: 'white6.JPG' }
-          ]
-        }
+        leftFirst: { name: 'Black Faces', items: [
+          { type: 'image', value: 'black1.JPG' },
+          { type: 'image', value: 'black2.JPG' },
+          { type: 'image', value: 'black3.JPG' },
+          { type: 'image', value: 'black4.JPG' },
+          { type: 'image', value: 'black5.JPG' },
+          { type: 'image', value: 'black6.JPG' }
+        ]},
+        rightFirst: { name: 'White Faces', items: [
+          { type: 'image', value: 'white1.JPG' },
+          { type: 'image', value: 'white2.JPG' },
+          { type: 'image', value: 'white3.JPG' },
+          { type: 'image', value: 'white4.JPG' },
+          { type: 'image', value: 'white5.JPG' },
+          { type: 'image', value: 'white6.JPG' }
+        ]}
       },
       attributes: {
-        leftFirst: {
-          name: 'Bad',
-          items: [
-            { type: 'text', value: 'evil' },
-            { type: 'text', value: 'agony' },
-            { type: 'text', value: 'awful' },
-            { type: 'text', value: 'nasty' },
-            { type: 'text', value: 'terrible' },
-            { type: 'text', value: 'horrible' },
-            { type: 'text', value: 'failure' },
-            { type: 'text', value: 'hurt' }
-          ]
-        },
-        rightFirst: {
-          name: 'Good',
-          items: [
-            { type: 'text', value: 'joy' },
-            { type: 'text', value: 'happy' },
-            { type: 'text', value: 'laughter' },
-            { type: 'text', value: 'love' },
-            { type: 'text', value: 'glorious' },
-            { type: 'text', value: 'pleasure' },
-            { type: 'text', value: 'peace' },
-            { type: 'text', value: 'wonderful' }
-          ]
-        }
+        leftFirst: { name: 'Bad', items: [
+          { type: 'text', value: 'evil' },
+          { type: 'text', value: 'agony' },
+          { type: 'text', value: 'awful' },
+          { type: 'text', value: 'nasty' },
+          { type: 'text', value: 'terrible' },
+          { type: 'text', value: 'horrible' },
+          { type: 'text', value: 'failure' },
+          { type: 'text', value: 'hurt' }
+        ]},
+        rightFirst: { name: 'Good', items: [
+          { type: 'text', value: 'joy' },
+          { type: 'text', value: 'happy' },
+          { type: 'text', value: 'laughter' },
+          { type: 'text', value: 'love' },
+          { type: 'text', value: 'glorious' },
+          { type: 'text', value: 'pleasure' },
+          { type: 'text', value: 'peace' },
+          { type: 'text', value: 'wonderful' }
+        ]}
       },
       blocks: [
         { type: 'attribute', trials: 16, left: 'attributes.leftFirst', right: 'attributes.rightFirst' },
@@ -176,54 +133,23 @@
     const now = () => performance.now();
     const getByPath = (obj, path) => path.split('.').reduce((o,k)=>o[k], obj);
 
-    let state = {
-      blockIndex: -1,
-      trialIndex: 0,
-      running: false,
-      currentStimulus: null,
-      keymap: { left: 'E', right: 'I' },
-      startTime: null,
-      data: [],
-      summary: {}
-    };
-
+    let state = { blockIndex: -1, trialIndex: 0, running: false, currentStimulus: null, keymap: { left: 'E', right: 'I' }, startTime: null, data: [], summary: {} };
     let pool = [];
 
     function labelsFor(block){
       const nameOf = ref => Array.isArray(ref) ? ref.map(r=>getByPath(CONFIG,r).name).join(' or ') : getByPath(CONFIG,ref).name;
       return {left: nameOf(block.left), right: nameOf(block.right)};
     }
-
     function buildStimulusPool(block) {
-      const getItems = ref =>
-        Array.isArray(ref)
-          ? ref.flatMap(r => getByPath(CONFIG, r).items)
-          : getByPath(CONFIG, ref).items;
-
-      const leftItems = (Array.isArray(block.left) ? block.left : [block.left])
-        .flatMap(ref => getItems(ref).map(item => ({ ...item, side: 'left' })));
-
-      const rightItems = (Array.isArray(block.right) ? block.right : [block.right])
-        .flatMap(ref => getItems(ref).map(item => ({ ...item, side: 'right' })));
-
+      const getItems = ref => Array.isArray(ref) ? ref.flatMap(r => getByPath(CONFIG, r).items) : getByPath(CONFIG, ref).items;
+      const leftItems = (Array.isArray(block.left) ? block.left : [block.left]).flatMap(ref => getItems(ref).map(item => ({ ...item, side: 'left' })));
+      const rightItems = (Array.isArray(block.right) ? block.right : [block.right]).flatMap(ref => getItems(ref).map(item => ({ ...item, side: 'right' })));
       return shuffle([...leftItems, ...rightItems]);
     }
 
-    function start(){
-      if(state.blockIndex===-1){ nextBlock(); }
-      state.running = true;
-      nextTrial();
-    }
-
+    function start(){ if(state.blockIndex===-1){ nextBlock(); } state.running = true; nextTrial(); }
     function pause(){ state.running=false; }
-    function reset(){
-      state = {...state, blockIndex:-1, trialIndex:0, running:false, data:[], summary:{} };
-      $('#stimulus').textContent = 'Press Space to begin';
-      $('#leftLabel').textContent = '—';
-      $('#rightLabel').textContent = '—';
-      $('#bar').style.width = '0%';
-      $('#results').textContent = 'No results yet.';
-    }
+    function reset(){ state = {...state, blockIndex:-1, trialIndex:0, running:false, data:[], summary:{} }; $('#stimulus').textContent = 'Press Space to begin'; $('#leftLabel').textContent = '—'; $('#rightLabel').textContent = '—'; $('#bar').style.width = '0%'; $('#results').textContent = 'No results yet.'; }
 
     function nextBlock(){
       state.blockIndex++;
@@ -241,26 +167,12 @@
     function nextTrial() {
       if (!state.running) return;
       const block = CONFIG.blocks[state.blockIndex];
-
-      if (state.trialIndex >= block.trials) {
-        nextBlock();
-        return;
-      }
-
-      if (!pool || pool.length < block.trials) {
-        pool = buildStimulusPool(block);
-      }
-
+      if (state.trialIndex >= block.trials) { nextBlock(); return; }
+      if (!pool || pool.length < block.trials) { pool = buildStimulusPool(block); }
       const stim = pool[state.trialIndex % pool.length];
-      state.currentStimulus = stim;
-      state.startTime = now();
-
-      if (stim.type === 'text') {
-        $('#stimulus').textContent = stim.value;
-      } else if (stim.type === 'image') {
-        $('#stimulus').innerHTML = `<img src="${stim.value}" alt="">`;
-      }
-
+      state.currentStimulus = stim; state.startTime = now();
+      if (stim.type === 'text') { $('#stimulus').textContent = stim.value; } 
+      else { $('#stimulus').innerHTML = `<img src="${stim.value}" alt="">`; }
       updateProgress();
     }
 
@@ -281,72 +193,54 @@
       const correct = sidePressed === state.currentStimulus.side;
       const rt = now() - state.startTime;
 
-      state.data.push({
-        block: state.blockIndex+1,
-        trial: state.trialIndex+1,
-        stimulus: state.currentStimulus.value,
-        correctSide: state.currentStimulus.side,
-        response: sidePressed,
-        correct,
-        rt
-      });
-
-      if(!correct){
-        $('#stimulus').classList.add('wrong');
-        setTimeout(() => $('#stimulus').classList.remove('wrong'), 300);
-      }
-
-      state.trialIndex++;
-      nextTrial();
+      state.data.push({ block: state.blockIndex+1, trial: state.trialIndex+1, stimulus: state.currentStimulus.value, correctSide: state.currentStimulus.side, response: sidePressed, correct, rt });
+      if(!correct){ $('#stimulus').classList.add('wrong'); setTimeout(() => $('#stimulus').classList.remove('wrong'), 300); }
+      state.trialIndex++; nextTrial();
     }
 
-    function finish(){
+    async function finish(){
       state.running = false;
       $('#stimulus').textContent = 'All blocks complete. Computing results…';
       computeScores();
+
+      // --- Get survey ID from QuestionPro URL ---
+      const params = new URLSearchParams(window.location.search);
+      const surveyId = params.get('surveyid') || 'unknown';
+
+      // --- Auto-upload summary CSV to Firebase ---
+      try {
+        const headers = ['D','n_congruent','n_incongruent','errorPenaltyMs'];
+        const row = [state.summary.D, state.summary.nA, state.summary.nB, CONFIG.errorPenalty];
+        const csv = [headers.join(','), row.join(',')].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const filename = `iat-summary-${surveyId}.csv`;
+        const fileRef = window.firebaseRef(window.firebaseStorage, 'iat-results/' + filename);
+        await window.firebaseUploadBytes(fileRef, blob);
+        $('#results').innerHTML += `<p>✅ Uploaded to Firebase as <code>${filename}</code></p>`;
+      } catch (err) {
+        console.error('Upload failed:', err);
+        $('#results').innerHTML += `<p style="color:red">❌ Upload failed. Check console.</p>`;
+      }
     }
 
     function computeScores(){
       const penalty = CONFIG.errorPenalty;
-      const trials = state.data.map(r => ({
-        ...r,
-        rtAdj: r.correct ? r.rt : r.rt + penalty
-      }));
-
+      const trials = state.data.map(r => ({ ...r, rtAdj: r.correct ? r.rt : r.rt + penalty }));
       const A = trials.filter(r => r.block === 3).map(r => r.rtAdj);
       const B = trials.filter(r => r.block === 5).map(r => r.rtAdj);
-
       const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
-      const sd = arr => {
-        const m = mean(arr);
-        return Math.sqrt(arr.reduce((a,b)=>a+Math.pow(b-m,2),0)/(arr.length-1));
-      };
-
+      const sd = arr => { const m = mean(arr); return Math.sqrt(arr.reduce((a,b)=>a+Math.pow(b-m,2),0)/(arr.length-1)); };
       let D = null, direction = '';
       if(A.length > 2 && B.length > 2){
         const pooledSD = sd(A.concat(B));
         D = (mean(B) - mean(A)) / pooledSD;
-        direction = D > 0 ? 'Faster when Black+Bad / White+Good were paired (stereotypical).' :
-                            'Faster when Black+Good / White+Bad were paired (counter-stereotypical).';
+        direction = D > 0 ? 'Faster when Black+Bad / White+Good were paired (stereotypical).' : 'Faster when Black+Good / White+Bad were paired (counter-stereotypical).';
       }
-
-      state.summary = {
-        D: D != null ? Number(D.toFixed(2)) : null,
-        nA: A.length,
-        nB: B.length,
-        direction
-      };
-
-      if(D == null){
-        $('#results').textContent = 'Not enough valid data to compute a score.';
-      } else {
+      state.summary = { D: D != null ? Number(D.toFixed(2)) : null, nA: A.length, nB: B.length, direction };
+      if(D == null){ $('#results').textContent = 'Not enough valid data to compute a score.'; }
+      else {
         const interp = interpretD(D);
-        $('#results').innerHTML = `
-          <div><strong>D-score:</strong> <span style="font-size:20px">${state.summary.D}</span></div>
-          <div>${direction}</div>
-          <div>Interpretation: <em>${interp.text}</em></div>
-          <div style="margin-top:8px">(Positive D = stereotypical bias. Negative D = counter-stereotypical bias.)</div>
-        `;
+        $('#results').innerHTML = `<div><strong>D-score:</strong> <span style="font-size:20px">${state.summary.D}</span></div><div>${direction}</div><div>Interpretation: <em>${interp.text}</em></div>`;
       }
     }
 
@@ -358,34 +252,11 @@
       return { text: 'Strong association' };
     }
 
-    function exportRawCSV(){
-      const headers = ['block','trial','stimulus','correctSide','response','correct','rt'];
-      const rows = state.data.map(r => headers.map(h => r[h] ?? ''));
-      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-      download('race-iat-raw.csv', csv);
-    }
-
-    function exportSummaryCSV(){
-      const h = ['D','n_congruent','n_incongruent','errorPenaltyMs'];
-      const r = [state.summary.D, state.summary.nA, state.summary.nB, CONFIG.errorPenalty];
-      const csv = [h.join(','), r.join(',')].join('\n');
-      download('race-iat-summary.csv', csv);
-    }
-
-    function download(filename, content){
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([content], {type:'text/csv'}));
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
+    // --- Listeners ---
     window.addEventListener('keydown', handleKey);
     $('#startBtn').addEventListener('click', () => { if(!state.running) start(); });
     $('#pauseBtn').addEventListener('click', pause);
     $('#resetBtn').addEventListener('click', reset);
-    $('#downloadRaw').addEventListener('click', exportRawCSV);
-    $('#downloadSummary').addEventListener('click', exportSummaryCSV);
   </script>
 </body>
 </html>
